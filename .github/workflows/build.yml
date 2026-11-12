@@ -23,27 +23,14 @@ jobs:
 
       - name: Incluir el juego
         run: |
-          mkdir -p emu/app/src/main/assets/game
           JAR=$(find . -path ./emu -prune -o -name "*.jar" -print | head -n 1)
           echo "Usando: $JAR"
           if [ -z "$JAR" ]; then echo "ERROR: no hay ningun .jar en el repo"; exit 1; fi
-          cp "$JAR" emu/app/src/main/assets/game/
-          mkdir -p out
+          mkdir -p emu/app/src/main/assets/game out
+          cp "$JAR" emu/app/src/main/assets/game/game.jar
           cp "$JAR" out/tom_and_jerry_mouse_maze.jar
 
-      - name: Compilar APK
-        working-directory: emu
+      - name: Nombre de la app (opcional)
+        continue-on-error: true
         run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
-
-      - name: Reunir APK
-        run: |
-          find emu/app/build/outputs/apk -name "*.apk" -exec cp {} out/ \;
-          ls -la out
-
-      - name: Subir APK y JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: TomAndJerry-APK
-          path: out/*
+          grep -rl 'name="app_
