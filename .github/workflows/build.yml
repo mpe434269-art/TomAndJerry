@@ -2,18 +2,14 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main, master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Java 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
@@ -25,12 +21,22 @@ jobs:
         run: |
           JAR=$(find . -path ./emu -prune -o -name "*.jar" -print | head -n 1)
           echo "Usando: $JAR"
-          if [ -z "$JAR" ]; then echo "ERROR: no hay ningun .jar en el repo"; exit 1; fi
           mkdir -p emu/app/src/main/assets/game out
           cp "$JAR" emu/app/src/main/assets/game/game.jar
           cp "$JAR" out/tom_and_jerry_mouse_maze.jar
 
-      - name: Nombre de la app (opcional)
-        continue-on-error: true
+      - name: Compilar APK
+        working-directory: emu
         run: |
-          grep -rl 'name="app_
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Reunir APK
+        run: |
+          find emu/app/build/outputs/apk -name "*.apk" -exec cp {} out/ \;
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TomAndJerry-APK
+          path: out/*
